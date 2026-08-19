@@ -125,6 +125,11 @@ async function finalizeSale(state) {
     }
 
     if (team && player) {
+      // Remove player from ALL other teams to guarantee ONE single team owns the player!
+      await Team.updateMany(
+        { _id: { $ne: team._id } },
+        { $pull: { playersWon: player._id } }
+      );
       if (!team.playersWon) team.playersWon = [];
       if (!team.playersWon.some((id) => id.toString() === player._id.toString())) {
         team.playersWon.push(player._id);

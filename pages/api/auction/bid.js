@@ -1,4 +1,4 @@
-﻿import connectDB from '../../../lib/mongodb.js';
+import connectDB from '../../../lib/mongodb.js';
 import AuctionState from '../../../models/AuctionState.js';
 import Player from '../../../models/Player.js';
 import Manager from '../../../models/Manager.js';
@@ -79,6 +79,7 @@ export default async function handler(req, res) {
     state.highestBidderManager = manager._id;
     state.highestBidderTeam = team ? team._id : null;
     state.highestBidderManagerName = manager.name;
+    state.highestBidderName = manager.name;
     state.highestBidderTeamName = team ? team.name : 'Independent';
     state.bidHistory.unshift(bidEntry);
     state.timer = Math.max(state.timer, 15); // Add time on bid

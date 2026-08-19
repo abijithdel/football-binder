@@ -208,22 +208,10 @@ export function AppProvider({ children }) {
 
   // Place Bid action (Supports both WebSockets & Vercel HTTP API)
   const placeBid = async (amount) => {
-    let managerId = user?.managerProfile?._id || user?.managerProfile;
-
-    if (!managerId && user?.role === 'admin') {
-      try {
-        const res = await fetch('/api/managers');
-        const data = await res.json();
-        if (data.managers && data.managers.length > 0) {
-          managerId = data.managers[0]._id;
-        }
-      } catch (e) {
-        console.error('Error fetching admin fallback manager:', e);
-      }
-    }
+    let managerId = user?.managerProfile?._id || (typeof user?.managerProfile === 'string' ? user.managerProfile : null);
 
     if (!managerId) {
-      setBidError('Only assigned managers can place bids. Please log in as a manager.');
+      setBidError('Only logged-in club managers can place bids. Please sign in to your manager account.');
       setTimeout(() => setBidError(''), 4000);
       return;
     }
