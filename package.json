@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node server.js",
     "build": "next build",
-    "start": "NODE_ENV=production node server.js"
+    "start": "NODE_ENV=production node server.js",
+    "create-admin": "node create_admin.mjs"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
