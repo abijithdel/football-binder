@@ -137,8 +137,6 @@ export default function ManagerDashboard() {
       return;
     }
     if (finalVal > 0) {
-      // Immediately minus the manager budget
-      setManagerBudget((prev) => Math.max(0, prev - finalVal));
       placeBid(finalVal);
     }
   };
@@ -225,7 +223,7 @@ export default function ManagerDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
         {/* LEFT STAGE: Live Auction Card & Bidding Pad */}
         <div className="lg:col-span-7 space-y-6">
-          {currentPlayer && (isLive || isPaused || isSold || isUnsold) ? (
+          {currentPlayer && (isLive || isPaused) ? (
             <div className={`fifa-card p-6 sm:p-8 relative overflow-hidden ${isLive ? 'fifa-card-active' : ''}`}>
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
@@ -235,12 +233,9 @@ export default function ManagerDashboard() {
                   </span>
                 </div>
 
-                {isLive && (
-                  <span className="badge badge-live px-3 py-1">
-                    <span className="pulse-dot" /> LIVE IN AUCTION
-                  </span>
-                )}
-                {isSold && <span className="badge badge-sold px-3 py-1">AUCTION CONCLUDED</span>}
+                <span className="badge badge-live px-3 py-1">
+                  <span className="pulse-dot" /> LIVE IN AUCTION
+                </span>
               </div>
 
               {/* Player Showcase */}
@@ -266,24 +261,22 @@ export default function ManagerDashboard() {
                   </div>
 
                   {/* Timer Bar */}
-                  {(isLive || isPaused) && (
-                    <div className="p-4 rounded-xl bg-zinc-950/90 border border-white/15">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs uppercase font-mono text-zinc-400 flex items-center gap-1.5">
-                          <Timer className="w-4 h-4 text-zinc-300" /> Auction Hammer Countdown
-                        </span>
-                        <span className={`font-mono text-2xl font-black ${timer <= 5 ? 'text-red-400 animate-pulse' : 'text-white'}`}>
-                          {timer}s
-                        </span>
-                      </div>
-                      <div className="w-full h-2 rounded-full bg-zinc-800 overflow-hidden">
-                        <div
-                          className={`h-full transition-all duration-1000 ${timer <= 5 ? 'bg-red-500' : 'bg-white'}`}
-                          style={{ width: `${Math.min(100, (timer / 30) * 100)}%` }}
-                        />
-                      </div>
+                  <div className="p-4 rounded-xl bg-zinc-950/90 border border-white/15">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs uppercase font-mono text-zinc-400 flex items-center gap-1.5">
+                        <Timer className="w-4 h-4 text-zinc-300" /> Auction Hammer Countdown
+                      </span>
+                      <span className={`font-mono text-2xl font-black ${timer <= 5 ? 'text-red-400 animate-pulse' : 'text-white'}`}>
+                        {timer}s
+                      </span>
                     </div>
-                  )}
+                    <div className="w-full h-2 rounded-full bg-zinc-800 overflow-hidden">
+                      <div
+                        className={`h-full transition-all duration-1000 ${timer <= 5 ? 'bg-red-500' : 'bg-white'}`}
+                        style={{ width: `${Math.min(100, (timer / 30) * 100)}%` }}
+                      />
+                    </div>
+                  </div>
 
                   {/* Highest Bidder Status */}
                   <div className={`p-3.5 rounded-xl border flex items-center justify-between ${
@@ -302,161 +295,110 @@ export default function ManagerDashboard() {
                       {formatMoney(currentBid)}
                     </div>
                   </div>
-
-                  {/* If Sold: Winner Showcase */}
-                  {isSold && (
-                    <div className="mt-4 p-4 rounded-2xl bg-gradient-to-br from-amber-950/70 via-zinc-900 to-black border-2 border-amber-400/60 shadow-lg space-y-3">
-                      <div className="flex items-center justify-between border-b border-amber-400/20 pb-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xl animate-bounce">🏆</span>
-                          <span className="text-xs font-black text-amber-300 font-mono uppercase tracking-wider">
-                            AUCTION CONCLUDED & BOUND
-                          </span>
-                        </div>
-                        <span className="text-sm font-black text-emerald-400 font-mono">
-                          {formatMoney(currentBid)}
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-left">
-                        {/* Player */}
-                        <div className="p-2.5 rounded-xl bg-black/60 border border-white/10 flex items-center gap-2.5">
-                          <div className="w-10 h-12 rounded-lg overflow-hidden bg-zinc-900 border border-white/20 flex-shrink-0">
-                            <img
-                              src={currentPlayer?.photo || 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=400'}
-                              alt={currentPlayer?.name || 'Player'}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <div className="overflow-hidden">
-                            <div className="text-[9px] text-amber-400 font-mono font-bold uppercase">Transferred Player</div>
-                            <div className="text-xs font-bold text-white font-mono truncate">{currentPlayer?.name}</div>
-                            <div className="text-[9px] text-zinc-400 font-mono">{currentPlayer?.position} • {currentPlayer?.rating} OVR</div>
-                          </div>
-                        </div>
-
-                        {/* Winner Manager & Club */}
-                        <div className="p-2.5 rounded-xl bg-black/60 border border-white/10 flex items-center gap-2.5">
-                          <div className="w-10 h-12 rounded-lg overflow-hidden bg-zinc-900 border border-white/20 flex-shrink-0 flex items-center justify-center text-lg">
-                            {auctionState?.highestBidderManager?.photo ? (
-                              <img
-                                src={auctionState.highestBidderManager.photo}
-                                alt="Manager"
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <span>{auctionState?.highestBidderTeam?.icon || '👑'}</span>
-                            )}
-                          </div>
-                          <div className="overflow-hidden">
-                            <div className="text-[9px] text-emerald-400 font-mono font-bold uppercase">Winning Manager</div>
-                            <div className="text-xs font-bold text-white font-mono truncate">
-                              {auctionState?.highestBidderManager?.name ||
-                                auctionState?.highestBidderManagerName ||
-                                auctionState?.highestBidderName ||
-                                'Manager'}
-                            </div>
-                            <div className="text-[9px] text-zinc-300 font-mono truncate">
-                              {auctionState?.highestBidderTeam?.icon} {auctionState?.highestBidderTeam?.name || auctionState?.highestBidderTeamName || 'Independent'}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
 
               {/* Manager Bid Controls Pad */}
-              {isLive && (
-                <div className="mt-6 pt-6 border-t border-white/10 space-y-4">
-                  <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
-                    <span>Your Remaining Budget: <strong className="text-white">{formatMoney(managerBudget)}</strong></span>
-                    <span className="text-emerald-400 font-bold">● FAST BIDDING ACTIVE</span>
-                  </div>
-
-                  {/* 2 Options: 50 and 100 Tap to Add to Input System */}
-                  <div className="grid grid-cols-2 gap-3">
-                    {/* Option 1: 50 */}
-                    <button
-                      type="button"
-                      onClick={() => handleAddAmount(50)}
-                      className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 border-2 border-white/20 hover:border-cyan-400 hover:shadow-[0_0_25px_rgba(6,182,212,0.35)] transition-all flex flex-col items-center justify-center gap-1 group active:scale-95 cursor-pointer select-none"
-                      title="Add +50 to the bind input box"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Zap className="w-5 h-5 text-cyan-400 group-hover:scale-125 transition-transform" />
-                        <span className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight group-hover:text-cyan-300">
-                          +50
-                        </span>
-                      </div>
-                      <span className="text-[11px] text-zinc-400 font-mono">Press to Add +50</span>
-                    </button>
-
-                    {/* Option 2: 100 */}
-                    <button
-                      type="button"
-                      onClick={() => handleAddAmount(100)}
-                      className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 border-2 border-white/20 hover:border-amber-400 hover:shadow-[0_0_25px_rgba(245,158,11,0.35)] transition-all flex flex-col items-center justify-center gap-1 group active:scale-95 cursor-pointer select-none"
-                      title="Add +100 to the bind input box"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Flame className="w-5 h-5 text-amber-400 group-hover:scale-125 transition-transform" />
-                        <span className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight group-hover:text-amber-300">
-                          +100
-                        </span>
-                      </div>
-                      <span className="text-[11px] text-zinc-400 font-mono">Press to Add +100</span>
-                    </button>
-                  </div>
-
-                  {/* Text Input Box & Action BIND Button */}
-                  <form onSubmit={handleExecuteBind} className="space-y-3">
-                    <div className="text-[11px] text-zinc-400 font-mono flex items-center justify-between">
-                      <span>Bind Amount (in ₹):</span>
-                      <span className="text-cyan-300 font-bold font-mono">Current: {formatMoney(currentBid)}</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <div className="relative flex-1">
-                        <input
-                          type="number"
-                          step="1"
-                          placeholder="Enter or tap amount above..."
-                          value={bindInput}
-                          onChange={(e) => setBindInput(e.target.value)}
-                          className={`input-field pl-8 text-base py-3 font-mono font-bold text-white bg-black/60 border-2 rounded-xl w-full transition-colors ${
-                            Number(bindInput) > managerBudget
-                              ? 'border-red-500/80 focus:border-red-400'
-                              : 'border-white/25 focus:border-cyan-400'
-                          }`}
-                        />
-                        <span className="font-mono text-zinc-400 absolute left-3 top-3 font-black text-base">₹</span>
-                      </div>
-                      <button
-                        type="submit"
-                        disabled={!bindInput || Number(bindInput) <= 0 || Number(bindInput) > managerBudget}
-                        className={`btn py-3 px-6 font-mono font-black text-sm tracking-wider flex items-center gap-2 border-none rounded-xl active:scale-95 transition-all ${
-                          Number(bindInput) > managerBudget
-                            ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed opacity-60'
-                            : 'btn-primary bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-black shadow-[0_0_25px_rgba(16,185,129,0.4)] cursor-pointer'
-                        }`}
-                      >
-                        <Zap className="w-4 h-4 fill-current" /> BIND NOW
-                      </button>
-                    </div>
-                    {Number(bindInput) > managerBudget && (
-                      <div className="p-2.5 rounded-xl bg-red-950/70 border border-red-500/40 text-red-300 text-xs font-mono flex items-center gap-2 animate-pulse">
-                        <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
-                        <span>
-                          Cannot Bind! Amount (₹{Number(bindInput).toLocaleString('en-IN')}) exceeds available funds (₹{managerBudget.toLocaleString('en-IN')}).
-                        </span>
-                      </div>
-                    )}
-                  </form>
+              <div className="mt-6 pt-6 border-t border-white/10 space-y-4">
+                <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
+                  <span>Your Remaining Budget: <strong className="text-white">{formatMoney(managerBudget)}</strong></span>
+                  <span className="text-emerald-400 font-bold">● FAST BIDDING ACTIVE</span>
                 </div>
-              )}
+
+                {/* 2 Options: 50 and 100 Tap to Add to Input System */}
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleAddAmount(50)}
+                    className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 border-2 border-white/20 hover:border-cyan-400 hover:shadow-[0_0_25px_rgba(6,182,212,0.35)] transition-all flex flex-col items-center justify-center gap-1 group active:scale-95 cursor-pointer select-none"
+                    title="Add +50 to the bind input box"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Zap className="w-5 h-5 text-cyan-400 group-hover:scale-125 transition-transform" />
+                      <span className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight group-hover:text-cyan-300">
+                        +50
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-zinc-400 font-mono">Press to Add +50</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleAddAmount(100)}
+                    className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 border-2 border-white/20 hover:border-emerald-400 hover:shadow-[0_0_25px_rgba(52,211,153,0.35)] transition-all flex flex-col items-center justify-center gap-1 group active:scale-95 cursor-pointer select-none"
+                    title="Add +100 to the bind input box"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Flame className="w-5 h-5 text-emerald-400 group-hover:scale-125 transition-transform" />
+                      <span className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight group-hover:text-emerald-300">
+                        +100
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-zinc-400 font-mono">Press to Add +100</span>
+                  </button>
+                </div>
+
+                {/* Primary Bind Form */}
+                <form onSubmit={handleExecuteBind} className="space-y-3">
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="relative flex-1">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 font-mono text-zinc-500 font-black text-lg">
+                        ₹
+                      </span>
+                      <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={bindInput}
+                        onChange={(e) => setBindInput(e.target.value)}
+                        placeholder="Enter bind amount"
+                        className="w-full bg-zinc-950 border-2 border-white/20 focus:border-emerald-400 rounded-2xl py-4 pl-10 pr-4 text-xl sm:text-2xl font-black font-mono text-white placeholder-zinc-600 focus:outline-none transition-all shadow-inner"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={Number(bindInput) > managerBudget || Number(bindInput) <= 0}
+                      className={`btn py-4 px-8 text-base font-mono font-black tracking-wider flex items-center justify-center gap-2 rounded-2xl shadow-xl transition-all ${
+                        Number(bindInput) > managerBudget
+                          ? 'bg-red-950/80 border-2 border-red-500/50 text-red-400 cursor-not-allowed'
+                          : 'btn-primary hover:scale-[1.02] active:scale-95'
+                      }`}
+                    >
+                      <Zap className="w-5 h-5 fill-current" />
+                      <span>⚡ BIND NOW</span>
+                    </button>
+                  </div>
+
+                  {Number(bindInput) > managerBudget && (
+                    <div className="p-2.5 rounded-xl bg-red-950/60 border border-red-500/40 text-red-300 text-xs font-mono flex items-center gap-2 animate-pulse">
+                      <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                      <span>Bind amount exceeds your transfer budget ({formatMoney(managerBudget)})!</span>
+                    </div>
+                  )}
+                </form>
+              </div>
+            </div>
+          ) : currentPlayer && isSold && isHighestBidder ? (
+            /* Manager WON this player celebration card */
+            <div className="glass-panel p-8 text-center space-y-4 border-2 border-emerald-500/50 shadow-[0_0_40px_rgba(16,185,129,0.25)]">
+              <div className="text-4xl animate-bounce">🏆</div>
+              <span className="badge bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 text-xs font-mono font-bold uppercase tracking-wider px-3 py-1">
+                AUCTION WON & BOUND
+              </span>
+              <h3 className="text-2xl font-black font-mono text-white">
+                CONGRATULATIONS! YOU SIGNED {currentPlayer.name}!
+              </h3>
+              <p className="text-xs text-zinc-300 font-mono">
+                Transferred to your team for <strong className="text-emerald-400 font-black">{formatMoney(currentBid)}</strong>.
+                Player is now in your active squad on the right!
+              </p>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-mono text-zinc-400">
+                <span className="pulse-dot" /> Waiting for next player
+              </div>
             </div>
           ) : (
+            /* Standby Card when no active auction or when someone else won */
             <div className="glass-panel p-12 text-center">
               <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-white/20 flex items-center justify-center text-3xl mx-auto mb-4">
                 ⚽
@@ -464,9 +406,16 @@ export default function ManagerDashboard() {
               <h3 className="text-xl font-bold font-mono text-white mb-2">
                 AUCTION ARENA STANDBY
               </h3>
-              <p className="text-xs text-zinc-400 max-w-sm mx-auto mb-6">
-                Waiting for the Commissioner to bring the next player to the bidding block. Keep your budget ready!
-              </p>
+              {currentPlayer && isSold ? (
+                <p className="text-xs text-zinc-400 max-w-sm mx-auto mb-6">
+                  {currentPlayer.name} was signed by <strong>{auctionState?.highestBidderName || auctionState?.highestBidderTeamName || 'another team'}</strong> for {formatMoney(currentBid)}.
+                  Waiting for Commissioner to bring the next player to the bidding block.
+                </p>
+              ) : (
+                <p className="text-xs text-zinc-400 max-w-sm mx-auto mb-6">
+                  Waiting for the Commissioner to bring the next player to the bidding block. Keep your transfer budget ready!
+                </p>
+              )}
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-mono text-zinc-400">
                 <span className="pulse-dot" /> Connected to Live Auction Feed
               </div>

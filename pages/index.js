@@ -98,8 +98,6 @@ export default function LiveArenaPage() {
       return;
     }
     if (finalVal > 0) {
-      // Immediately minus the manager funds!
-      setManagerBudget((prev) => Math.max(0, prev - finalVal));
       placeBid(finalVal);
     }
   };

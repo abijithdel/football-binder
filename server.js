@@ -121,6 +121,7 @@ async function finalizeSale(state) {
     }
 
     if (manager) {
+      manager.budget = Math.max(0, manager.budget - state.currentBid);
       await manager.save();
     }
 
@@ -284,10 +285,6 @@ app.prepare().then(async () => {
           });
           return;
         }
-
-        // Minus / deduct the bound amount from manager fund
-        manager.budget = manager.budget - bidAmount;
-        await manager.save();
 
         const team = manager.team;
         const bidEntry = {

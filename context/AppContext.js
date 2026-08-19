@@ -225,18 +225,6 @@ export function AppProvider({ children }) {
       return;
     }
 
-    // Optimistically deduct the bound amount from manager funds
-    setUser((prev) => {
-      if (!prev || !prev.managerProfile) return prev;
-      return {
-        ...prev,
-        managerProfile: {
-          ...prev.managerProfile,
-          budget: Math.max(0, (prev.managerProfile.budget || 1000) - numAmount),
-        },
-      };
-    });
-
     if (socket && isSocketActive && socket.connected) {
       socket.emit('auction:place_bid', {
         managerId,

@@ -85,6 +85,11 @@ export default async function handler(req, res) {
         await player.save();
       }
 
+      if (manager) {
+        manager.budget = Math.max(0, manager.budget - state.currentBid);
+        await manager.save();
+      }
+
       if (team && player) {
         // Remove player from ALL other teams to guarantee ONE single team owns the player!
         await Team.updateMany(

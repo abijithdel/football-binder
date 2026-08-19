@@ -59,10 +59,6 @@ export default async function handler(req, res) {
       });
     }
 
-    // Deduct manager budget
-    manager.budget = manager.budget - bidAmount;
-    await manager.save();
-
     const team = manager.team;
     const bidEntry = {
       managerId: manager._id,
