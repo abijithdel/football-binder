@@ -87,72 +87,129 @@ export function AppProvider({ children }) {
     fetchUser();
   }, []);
 
-  // Initialize Socket.io connection
-  useEffect(() => {
-    const s = io({
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1000,
-    });
+  const [isSocketActive, setIsSocketActive] = useState(false);
 
-    s.on('connect', () => {
-      console.log('⚡ Connected to Live Football Auction Socket');
-    });
-
-    s.on('auction:state_update', (state) => {
-      setAuctionState(state);
-      if (state && state.timer !== undefined) {
-        setTimer(state.timer);
+  // Fetch auction state directly via REST
+  const fetchAuctionState = async () => {
+    try {
+      const res = await fetch('/api/auction/state');
+      const data = await res.json();
+      if (res.ok && data.state) {
+        setAuctionState(data.state);
+        if (data.state.timer !== undefined) {
+          setTimer(data.state.timer);
+        }
       }
-    });
+    } catch (e) {
+      // silent
+    }
+  };
 
-    s.on('auction:tick', (data) => {
-      setTimer(data.timer);
-    });
+  // Initialize Socket.io connection or fallback gracefully
+  useEffect(() => {
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || undefined;
+    let s = null;
 
-    s.on('auction:new_bid', (data) => {
-      setLastBidNotification(data);
-      playChime('bid');
-      setTimeout(() => setLastBidNotification(null), 4000);
-      // Immediately minus / sync manager funds
-      fetchUser();
-    });
+    try {
+      s = io(socketUrl, {
+        reconnectionAttempts: 3,
+        reconnectionDelay: 2000,
+        timeout: 5000,
+        transports: ['websocket', 'polling'],
+      });
 
-    s.on('auction:player_started', (data) => {
-      playChime('hammer');
-    });
+      s.on('connect', () => {
+        setIsSocketActive(true);
+        console.log('⚡ Connected to Live Football Auction Socket');
+      });
 
-    s.on('auction:player_sold', (data) => {
-      playChime('win');
-      try {
-        confetti({
-          particleCount: 120,
-          spread: 80,
-          origin: { y: 0.6 },
-          colors: ['#ffffff', '#aaaaaa', '#ffffff', '#222222'],
-        });
-      } catch (e) {}
-      // Refresh current user data to update manager's budget
-      fetchUser();
-    });
+      s.on('connect_error', () => {
+        setIsSocketActive(false);
+      });
 
-    s.on('auction:bid_error', (data) => {
-      setBidError(data.message || 'Bid rejected');
-      setTimeout(() => setBidError(''), 4000);
-    });
+      s.on('disconnect', () => {
+        setIsSocketActive(false);
+      });
 
-    setSocket(s);
+      s.on('auction:state_update', (state) => {
+        setAuctionState(state);
+        if (state && state.timer !== undefined) {
+          setTimer(state.timer);
+        }
+      });
+
+      s.on('auction:tick', (data) => {
+        setTimer(data.timer);
+      });
+
+      s.on('auction:new_bid', (data) => {
+        setLastBidNotification(data);
+        playChime('bid');
+        setTimeout(() => setLastBidNotification(null), 4000);
+        fetchUser();
+      });
+
+      s.on('auction:player_started', () => {
+        playChime('hammer');
+      });
+
+      s.on('auction:player_sold', () => {
+        playChime('win');
+        try {
+          confetti({
+            particleCount: 120,
+            spread: 80,
+            origin: { y: 0.6 },
+            colors: ['#ffffff', '#aaaaaa', '#ffffff', '#222222'],
+          });
+        } catch (e) {}
+        fetchUser();
+      });
+
+      s.on('auction:bid_error', (data) => {
+        setBidError(data.message || 'Bid rejected');
+        setTimeout(() => setBidError(''), 4000);
+      });
+
+      setSocket(s);
+    } catch (err) {
+      console.warn('Socket initialization skipped, operating in serverless mode');
+    }
+
+    // Initial state fetch
+    fetchAuctionState();
 
     return () => {
-      s.disconnect();
+      if (s) s.disconnect();
     };
   }, [playChime]);
 
-  // Place Bid action
+  // Serverless Real-time Polling Loop (Essential for Vercel / Cloud deployments)
+  useEffect(() => {
+    const pollInterval = setInterval(() => {
+      if (!isSocketActive) {
+        fetchAuctionState();
+      }
+    }, 1500);
+
+    return () => clearInterval(pollInterval);
+  }, [isSocketActive]);
+
+  // Client-side smooth timer countdown when live
+  useEffect(() => {
+    if (auctionState?.status !== 'live') return;
+
+    const timerInt = setInterval(() => {
+      setTimer((prev) => Math.max(0, prev - 1));
+    }, 1000);
+
+    return () => clearInterval(timerInt);
+  }, [auctionState?.status]);
+
+  // Place Bid action (Supports both WebSockets & Vercel HTTP API)
   const placeBid = async (amount) => {
-    if (!socket) return;
     let managerId = user?.managerProfile?._id || user?.managerProfile;
 
-    // If logged in as admin without managerProfile, fetch first manager so admin can test bidding
     if (!managerId && user?.role === 'admin') {
       try {
         const res = await fetch('/api/managers');
@@ -192,41 +249,93 @@ export function AppProvider({ children }) {
       };
     });
 
-    socket.emit('auction:place_bid', {
-      managerId,
-      amount: numAmount,
-    });
+    if (socket && isSocketActive && socket.connected) {
+      socket.emit('auction:place_bid', {
+        managerId,
+        amount: numAmount,
+      });
+    } else {
+      // Vercel Serverless HTTP Fallback
+      try {
+        const res = await fetch('/api/auction/bid', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ managerId, amount: numAmount }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setBidError(data.message || 'Bid rejected');
+          setTimeout(() => setBidError(''), 4000);
+        } else {
+          if (data.auctionState) setAuctionState(data.auctionState);
+          if (data.bid) setLastBidNotification({ bid: data.bid, currentBid: numAmount });
+          playChime('bid');
+          fetchUser();
+        }
+      } catch (err) {
+        setBidError(err.message || 'Failed to submit bid');
+        setTimeout(() => setBidError(''), 4000);
+      }
+    }
   };
 
-  // Admin Socket actions
+  // Admin Actions (Supports both WebSockets & Vercel HTTP API)
+  const executeAdminAction = async (actionPayload) => {
+    if (socket && isSocketActive && socket.connected) {
+      if (actionPayload.action === 'start') {
+        socket.emit('admin:start_auction', { playerId: actionPayload.playerId, duration: actionPayload.duration });
+      } else if (actionPayload.action === 'sell') {
+        socket.emit('admin:sell_now');
+      } else if (actionPayload.action === 'unsold') {
+        socket.emit('admin:unsold_now');
+      } else if (actionPayload.action === 'pause' || actionPayload.action === 'resume') {
+        socket.emit('admin:toggle_pause');
+      } else if (actionPayload.action === 'add_time') {
+        socket.emit('admin:add_time', { seconds: actionPayload.seconds });
+      } else if (actionPayload.action === 'reset') {
+        socket.emit('admin:reset_auction');
+      }
+    } else {
+      // Vercel Serverless HTTP Fallback
+      try {
+        const res = await fetch('/api/auction/action', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(actionPayload),
+        });
+        const data = await res.json();
+        if (data.auctionState) {
+          setAuctionState(data.auctionState);
+          if (data.auctionState.timer !== undefined) setTimer(data.auctionState.timer);
+        }
+      } catch (e) {
+        console.error('Error executing admin action:', e);
+      }
+    }
+  };
+
   const startAuction = (playerId, duration = 30) => {
-    if (!socket) return;
-    socket.emit('admin:start_auction', { playerId, duration });
+    executeAdminAction({ action: 'start', playerId, duration });
   };
 
   const sellNow = () => {
-    if (!socket) return;
-    socket.emit('admin:sell_now');
+    executeAdminAction({ action: 'sell' });
   };
 
   const unsoldNow = () => {
-    if (!socket) return;
-    socket.emit('admin:unsold_now');
+    executeAdminAction({ action: 'unsold' });
   };
 
   const togglePause = () => {
-    if (!socket) return;
-    socket.emit('admin:toggle_pause');
+    executeAdminAction({ action: auctionState?.status === 'paused' ? 'resume' : 'pause' });
   };
 
   const addTime = (seconds = 15) => {
-    if (!socket) return;
-    socket.emit('admin:add_time', { seconds });
+    executeAdminAction({ action: 'add_time', seconds });
   };
 
   const resetAuction = () => {
-    if (!socket) return;
-    socket.emit('admin:reset_auction');
+    executeAdminAction({ action: 'reset' });
   };
 
   const logout = async () => {
