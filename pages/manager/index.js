@@ -271,6 +271,68 @@ export default function ManagerDashboard() {
                       {formatMoney(currentBid)}
                     </div>
                   </div>
+
+                  {/* If Sold: Winner Showcase */}
+                  {isSold && (
+                    <div className="mt-4 p-4 rounded-2xl bg-gradient-to-br from-amber-950/70 via-zinc-900 to-black border-2 border-amber-400/60 shadow-lg space-y-3">
+                      <div className="flex items-center justify-between border-b border-amber-400/20 pb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl animate-bounce">🏆</span>
+                          <span className="text-xs font-black text-amber-300 font-mono uppercase tracking-wider">
+                            AUCTION CONCLUDED & BOUND
+                          </span>
+                        </div>
+                        <span className="text-sm font-black text-emerald-400 font-mono">
+                          {formatMoney(currentBid)}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-left">
+                        {/* Player */}
+                        <div className="p-2.5 rounded-xl bg-black/60 border border-white/10 flex items-center gap-2.5">
+                          <div className="w-10 h-12 rounded-lg overflow-hidden bg-zinc-900 border border-white/20 flex-shrink-0">
+                            <img
+                              src={currentPlayer?.photo || 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=400'}
+                              alt={currentPlayer?.name || 'Player'}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="overflow-hidden">
+                            <div className="text-[9px] text-amber-400 font-mono font-bold uppercase">Transferred Player</div>
+                            <div className="text-xs font-bold text-white font-mono truncate">{currentPlayer?.name}</div>
+                            <div className="text-[9px] text-zinc-400 font-mono">{currentPlayer?.position} • {currentPlayer?.rating} OVR</div>
+                          </div>
+                        </div>
+
+                        {/* Winner Manager & Club */}
+                        <div className="p-2.5 rounded-xl bg-black/60 border border-white/10 flex items-center gap-2.5">
+                          <div className="w-10 h-12 rounded-lg overflow-hidden bg-zinc-900 border border-white/20 flex-shrink-0 flex items-center justify-center text-lg">
+                            {auctionState?.highestBidderManager?.photo ? (
+                              <img
+                                src={auctionState.highestBidderManager.photo}
+                                alt="Manager"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <span>{auctionState?.highestBidderTeam?.icon || '👑'}</span>
+                            )}
+                          </div>
+                          <div className="overflow-hidden">
+                            <div className="text-[9px] text-emerald-400 font-mono font-bold uppercase">Winning Manager</div>
+                            <div className="text-xs font-bold text-white font-mono truncate">
+                              {auctionState?.highestBidderManager?.name ||
+                                auctionState?.highestBidderManagerName ||
+                                auctionState?.highestBidderName ||
+                                'Manager'}
+                            </div>
+                            <div className="text-[9px] text-zinc-300 font-mono truncate">
+                              {auctionState?.highestBidderTeam?.icon} {auctionState?.highestBidderTeam?.name || auctionState?.highestBidderTeamName || 'Independent'}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 

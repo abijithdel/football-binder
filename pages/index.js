@@ -391,36 +391,122 @@ export default function LiveArenaPage() {
             {/* Leading Bidder Banner */}
             <div className="mt-4 p-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
               <div>
-                <div className="text-[10px] text-zinc-500 uppercase font-mono">Leading Manager</div>
+                <div className="text-[10px] text-zinc-500 uppercase font-mono">Leading Bidder</div>
                 <div className="text-sm font-bold text-white flex items-center gap-2">
                   <span>{auctionState?.highestBidderTeam?.icon || '🛡️'}</span>
-                  <span>{auctionState?.highestBidderName || 'No bids yet (Base Price)'}</span>
+                  <span>
+                    {auctionState?.highestBidderManager?.name ||
+                      auctionState?.highestBidderManagerName ||
+                      auctionState?.highestBidderName ||
+                      'No bids yet (Base Price)'}
+                  </span>
                 </div>
               </div>
-              {auctionState?.highestBidderTeamName && (
+              {(auctionState?.highestBidderTeam?.name || auctionState?.highestBidderTeamName) && (
                 <span className="badge badge-sold text-xs">
-                  {auctionState.highestBidderTeamName}
+                  {auctionState?.highestBidderTeam?.name || auctionState.highestBidderTeamName}
                 </span>
               )}
             </div>
 
-            {/* If Sold: Winner Showcase */}
+            {/* If Sold: Winner Showcase (Single Won Player + Winning Manager & Team) */}
             {isSold && (
-              <div className="mt-6 p-5 rounded-2xl bg-amber-950/40 border border-amber-400/40 text-center space-y-3">
-                <div className="text-3xl animate-bounce">🏆</div>
-                <div className="text-xs uppercase font-mono font-bold tracking-widest text-amber-400">
-                  AUCTION CONCLUDED & BOUND
+              <div className="mt-6 p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-amber-950/70 via-zinc-900 to-black border-2 border-amber-400/60 shadow-[0_0_40px_rgba(245,158,11,0.25)] space-y-4">
+                <div className="flex items-center justify-between border-b border-amber-400/20 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl animate-bounce">🏆</span>
+                    <div>
+                      <span className="badge bg-amber-500/20 text-amber-300 border border-amber-400/40 text-[10px] font-mono font-bold uppercase tracking-wider">
+                        AUCTION WON & BOUND
+                      </span>
+                      <h3 className="text-sm font-extrabold text-white font-mono">
+                        OFFICIAL PLAYER TRANSFER
+                      </h3>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[10px] text-zinc-400 font-mono uppercase">Sold Valuation</div>
+                    <div className="text-lg font-black text-emerald-400 font-mono">
+                      {formatMoney(auctionState?.currentBid)}
+                    </div>
+                  </div>
                 </div>
-                <div className="text-lg font-black text-white font-mono">
-                  Winner: {auctionState?.highestBidderName || 'Manager'}
+
+                {/* Dual Showcase: Won Player & Winning Manager / Team */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  {/* 1. Single Won Player */}
+                  <div className="p-3.5 rounded-2xl bg-black/60 border border-white/10 flex items-center gap-3">
+                    <div className="w-12 h-14 rounded-xl overflow-hidden bg-zinc-900 border border-white/20 flex-shrink-0 relative">
+                      <img
+                        src={currentPlayer?.photo || 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=400'}
+                        alt={currentPlayer?.name || 'Player'}
+                        className="w-full h-full object-cover"
+                      />
+                      <span className="absolute bottom-0 right-0 bg-white text-black text-[9px] font-black px-1 rounded-tl font-mono">
+                        {currentPlayer?.rating || 88}
+                      </span>
+                    </div>
+                    <div className="overflow-hidden">
+                      <div className="text-[10px] text-amber-400 uppercase font-mono font-bold flex items-center gap-1">
+                        <span>⚽ Player Transferred</span>
+                      </div>
+                      <div className="text-sm font-extrabold text-white font-mono truncate">
+                        {currentPlayer?.name || 'Star Player'}
+                      </div>
+                      <div className="text-[10px] text-zinc-400 font-mono">
+                        {currentPlayer?.position || 'FWD'} • {currentPlayer?.nationality || 'International'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 2. Winning Manager & Team */}
+                  <div className="p-3.5 rounded-2xl bg-black/60 border border-white/10 flex items-center gap-3">
+                    <div className="w-12 h-14 rounded-xl overflow-hidden bg-zinc-900 border border-white/20 flex-shrink-0 flex items-center justify-center text-xl">
+                      {auctionState?.highestBidderManager?.photo ? (
+                        <img
+                          src={auctionState.highestBidderManager.photo}
+                          alt="Manager"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span>{auctionState?.highestBidderTeam?.icon || '👑'}</span>
+                      )}
+                    </div>
+                    <div className="overflow-hidden">
+                      <div className="text-[10px] text-emerald-400 uppercase font-mono font-bold flex items-center gap-1">
+                        <span>🛡️ Winning Club & Manager</span>
+                      </div>
+                      <div className="text-sm font-extrabold text-white font-mono truncate">
+                        {auctionState?.highestBidderManager?.name ||
+                          auctionState?.highestBidderManagerName ||
+                          auctionState?.highestBidderName ||
+                          'Manager'}
+                      </div>
+                      <div className="text-[10px] text-zinc-300 font-mono flex items-center gap-1">
+                        <span>{auctionState?.highestBidderTeam?.icon || '🛡️'}</span>
+                        <span className="truncate">
+                          {auctionState?.highestBidderTeam?.name ||
+                            auctionState?.highestBidderTeamName ||
+                            'Independent'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="text-xs text-zinc-300 font-mono">
-                  Team: {auctionState?.highestBidderTeamName || 'Independent'} • Bound for{' '}
-                  <strong className="text-emerald-400 font-bold">{formatMoney(auctionState?.currentBid)}</strong>
-                </div>
-                <div className="pt-2">
-                  <Link href="/bind-log" className="btn btn-primary btn-sm font-mono text-xs inline-flex items-center gap-1.5 font-bold">
-                    View All in Bind Log <ChevronRight className="w-4 h-4" />
+
+                {/* Navigation Links */}
+                <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-white/10">
+                  <Link
+                    href="/squads"
+                    className="btn btn-secondary btn-sm text-xs font-mono inline-flex items-center gap-1.5"
+                  >
+                    <Users className="w-3.5 h-3.5 text-zinc-400" /> View Squad Rosters
+                  </Link>
+                  <Link
+                    href="/bind-log"
+                    className="btn btn-primary btn-sm text-xs font-mono font-bold inline-flex items-center gap-1.5"
+                  >
+                    View Bind Log <ChevronRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
               </div>
