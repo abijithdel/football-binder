@@ -55,10 +55,10 @@ export default function LoginPage() {
           ⚽
         </div>
         <h1 className="text-3xl font-extrabold tracking-tight text-white mb-2 font-mono">
-          AUTHENTICATE
+          SIGN IN
         </h1>
         <p className="text-sm text-zinc-400">
-          Enter your authorized credentials to enter the bidding floor.
+          Enter your authorized credentials to access the bidding floor.
         </p>
       </div>
 
@@ -110,16 +110,16 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="btn btn-primary w-full py-3.5 mt-2 font-bold flex items-center justify-center gap-2"
+            className="btn btn-primary w-full py-3.5 mt-2 font-bold flex items-center justify-center gap-2 font-mono tracking-wider text-sm"
           >
             {loading ? (
               <span className="flex items-center gap-2">
                 <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                Authenticating...
+                Signing In...
               </span>
             ) : (
               <>
-                Enter Auction Floor <ArrowRight className="w-4 h-4" />
+                Sign In <ArrowRight className="w-4 h-4" />
               </>
             )}
           </button>
