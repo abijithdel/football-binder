@@ -21,12 +21,12 @@ const ManagerSchema = new mongoose.Schema(
     },
     budget: {
       type: Number,
-      default: 150000000, // $150M default budget
+      default: 1000, // ₹1,000 INR default budget
       min: 0,
     },
     initialBudget: {
       type: Number,
-      default: 150000000,
+      default: 1000,
     },
   },
   { timestamps: true }

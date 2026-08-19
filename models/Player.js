@@ -19,11 +19,11 @@ const PlayerSchema = new mongoose.Schema(
     value: {
       type: Number,
       required: [true, 'Base value is required'],
-      default: 10000000, // $10M default base
+      default: 100, // ₹100 INR default base
     },
     currentValue: {
       type: Number,
-      default: 10000000,
+      default: 100,
     },
     rating: {
       type: Number,

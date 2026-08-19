@@ -40,7 +40,7 @@ export default function AdminPlayersPage() {
     name: '',
     photo: '',
     position: 'FWD',
-    value: 50, // in Millions
+    value: 100, // in INR
     rating: 85,
     nationality: 'International',
     age: 24,
@@ -91,7 +91,9 @@ export default function AdminPlayersPage() {
 
   const formatMoney = (val) => {
     if (!val && val !== 0) return '₹0';
-    return `₹${Number(val).toLocaleString('en-IN')}`;
+    const num = Number(val);
+    const cleanVal = num > 50000 ? Math.round(num / 1000000) : num;
+    return `₹${cleanVal.toLocaleString('en-IN')}`;
   };
 
   const handleOpenAddModal = () => {
@@ -102,11 +104,13 @@ export default function AdminPlayersPage() {
 
   const handleOpenEditModal = (player) => {
     setEditingPlayerId(player._id);
+    const rawVal = Number(player.value) || 100;
+    const cleanVal = rawVal > 50000 ? Math.round(rawVal / 1000000) : rawVal;
     setFormData({
       name: player.name,
       photo: player.photo,
       position: player.position,
-      value: (player.value / 1000000) || 50,
+      value: cleanVal,
       rating: player.rating || 80,
       nationality: player.nationality || 'International',
       age: player.age || 24,
@@ -127,7 +131,7 @@ export default function AdminPlayersPage() {
     try {
       const payload = {
         ...formData,
-        value: Number(formData.value) * 1000000,
+        value: Number(formData.value),
         rating: Number(formData.rating),
         age: Number(formData.age),
       };
@@ -433,11 +437,11 @@ export default function AdminPlayersPage() {
 
                 <div>
                   <label className="block text-xs uppercase font-mono text-zinc-400 mb-1">
-                    Base Valuation ($ in Millions) *
+                    Base Valuation (₹ INR) *
                   </label>
                   <input
                     type="number"
-                    step="0.5"
+                    step="1"
                     required
                     value={formData.value}
                     onChange={(e) => setFormData({ ...formData, value: e.target.value })}

@@ -39,7 +39,7 @@ export default function AdminManagersPage() {
     email: '',
     password: '',
     photo: '',
-    budget: 150, // in Millions
+    budget: 1000, // in INR
     teamId: '',
   };
   const [formData, setFormData] = useState(initialForm);
@@ -83,7 +83,9 @@ export default function AdminManagersPage() {
 
   const formatMoney = (val) => {
     if (!val && val !== 0) return '₹0';
-    return `₹${Number(val).toLocaleString('en-IN')}`;
+    const num = Number(val);
+    const cleanVal = num > 50000 ? Math.round(num / 1000000) : num;
+    return `₹${cleanVal.toLocaleString('en-IN')}`;
   };
 
   const handleOpenAddModal = () => {
@@ -94,12 +96,14 @@ export default function AdminManagersPage() {
 
   const handleOpenEditModal = (m) => {
     setEditingManagerId(m._id);
+    const rawBudget = Number(m.budget) || 1000;
+    const cleanBudget = rawBudget > 50000 ? Math.round(rawBudget / 1000000) : rawBudget;
     setFormData({
       name: m.name,
       email: m.user?.email || '',
       password: '', // blank unless changing
       photo: m.photo || '',
-      budget: (m.budget / 1000000) || 150,
+      budget: cleanBudget,
       teamId: m.team?._id || '',
     });
     setIsModalOpen(true);
@@ -110,7 +114,7 @@ export default function AdminManagersPage() {
     try {
       const payload = {
         ...formData,
-        budget: Number(formData.budget) * 1000000,
+        budget: Number(formData.budget),
       };
 
       let res;
@@ -418,7 +422,7 @@ export default function AdminManagersPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs uppercase font-mono text-zinc-400 mb-1">
-                    Transfer Budget ($M) *
+                    Transfer Budget (₹ INR) *
                   </label>
                   <input
                     type="number"

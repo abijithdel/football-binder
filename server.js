@@ -174,6 +174,24 @@ app.prepare().then(async () => {
     console.log('📦 Connected to MongoDB Atlas Cluster');
     // Ensure initial seed ONLY if database is empty
     await seedDatabase(false);
+    // Normalize any legacy inflated manager budgets (divided by 1,000,000)
+    const allManagers = await Manager.find();
+    for (const m of allManagers) {
+      if (m.budget > 50000) {
+        const fixed = Math.round(m.budget / 1000000) || 1000;
+        await Manager.findByIdAndUpdate(m._id, { $set: { budget: fixed, initialBudget: fixed } });
+        console.log(`✅ Normalized manager ${m.name} budget from ${m.budget} to ₹${fixed}`);
+      }
+    }
+    // Normalize any legacy inflated player values
+    const allPlayers = await Player.find();
+    for (const p of allPlayers) {
+      if (p.value > 50000) {
+        const fixed = Math.round(p.value / 1000000) || 100;
+        await Player.findByIdAndUpdate(p._id, { $set: { value: fixed, currentValue: fixed } });
+        console.log(`✅ Normalized player ${p.name} value from ${p.value} to ₹${fixed}`);
+      }
+    }
   } catch (err) {
     console.error('MongoDB startup error:', err);
   }

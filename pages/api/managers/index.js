@@ -9,10 +9,24 @@ export default async function handler(req, res) {
 
   if (req.method === 'GET') {
     try {
-      const managers = await Manager.find()
+      const rawManagers = await Manager.find()
         .populate('team')
         .populate('user', 'name email role')
-        .sort({ createdAt: -1 });
+        .sort({ createdAt: -1 })
+        .lean();
+
+      const managers = rawManagers.map((m) => {
+        let budget = m.budget;
+        let initialBudget = m.initialBudget;
+        if (budget > 50000) {
+          budget = Math.round(budget / 1000000) || 1000;
+          Manager.updateOne({ _id: m._id }, { $set: { budget, initialBudget: budget } }).exec();
+        }
+        if (initialBudget > 50000) {
+          initialBudget = Math.round(initialBudget / 1000000) || 1000;
+        }
+        return { ...m, budget, initialBudget };
+      });
 
       return res.status(200).json({ success: true, managers });
     } catch (error) {
@@ -27,7 +41,7 @@ export default async function handler(req, res) {
         return res.status(403).json({ message: 'Admin access required to create manager accounts' });
       }
 
-      const { name, email, password, photo, teamId, budget = 150000000 } = req.body;
+      const { name, email, password, photo, teamId, budget = 1000 } = req.body;
 
       if (!name || !email || !password) {
         return res.status(400).json({ message: 'Name, email, and password are required' });
@@ -51,8 +65,8 @@ export default async function handler(req, res) {
         photo: photo || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
         user: user._id,
         team: teamId || null,
-        budget: Number(budget) || 150000000,
-        initialBudget: Number(budget) || 150000000,
+        budget: Number(budget) || 1000,
+        initialBudget: Number(budget) || 1000,
       });
 
       user.managerProfile = manager._id;

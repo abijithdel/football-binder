@@ -132,48 +132,6 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
-
-      {/* Quick Demo Credentials Switcher */}
-      <div className="mt-8 p-5 rounded-2xl bg-zinc-950/80 border border-white/10">
-        <div className="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-3 font-mono flex items-center gap-2">
-          <UserCheck className="w-4 h-4 text-white" /> Quick Demo Accounts (Click to Fill)
-        </div>
-
-        <div className="space-y-2">
-          <button
-            type="button"
-            onClick={() => setCredentials('admin@football.com', 'admin123')}
-            className="w-full text-left p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-between text-xs transition-colors"
-          >
-            <div>
-              <span className="font-bold text-white font-mono">ADMIN:</span> admin@football.com
-            </div>
-            <span className="badge badge-sold text-[10px]">Commissioner</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setCredentials('pep@city.com', 'manager123')}
-            className="w-full text-left p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-between text-xs transition-colors"
-          >
-            <div>
-              <span className="font-bold text-white font-mono">MANAGER:</span> pep@city.com (Pep Guardiola)
-            </div>
-            <span className="text-[10px] text-zinc-400 font-mono">⚡ Titans</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setCredentials('carlo@madrid.com', 'manager123')}
-            className="w-full text-left p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-between text-xs transition-colors"
-          >
-            <div>
-              <span className="font-bold text-white font-mono">MANAGER:</span> carlo@madrid.com (Carlo Ancelotti)
-            </div>
-            <span className="text-[10px] text-zinc-400 font-mono">👑 Galacticos</span>
-          </button>
-        </div>
-      </div>
     </div>
   );
 }
