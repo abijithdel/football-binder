@@ -81,7 +81,7 @@ export default function Navbar() {
                     : 'text-zinc-400 hover:text-white hover:bg-white/5'
                 }`}
               >
-                <Trophy className="w-3.5 h-3.5" /> My Club
+                <Shield className="w-3.5 h-3.5" /> My Team
               </Link>
             )}
 
@@ -269,7 +269,7 @@ export default function Navbar() {
                 isActive('/manager') ? 'bg-white text-black' : 'text-zinc-300 bg-white/5'
               }`}
             >
-              <Trophy className="w-4 h-4" /> My Club & Squad
+              <Shield className="w-4 h-4" /> My Team
             </Link>
           )}
 

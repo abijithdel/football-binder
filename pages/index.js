@@ -474,7 +474,13 @@ export default function LiveArenaPage() {
                     </div>
                     <div className="overflow-hidden">
                       <div className="text-[10px] text-emerald-400 uppercase font-mono font-bold flex items-center gap-1">
-                        <span>🛡️ Winning Club & Manager</span>
+                        <span>
+                          🛡️ SIGNED TO{' '}
+                          {auctionState?.highestBidderManager?.name ||
+                            auctionState?.highestBidderManagerName ||
+                            auctionState?.highestBidderName ||
+                            'MANAGER'}
+                        </span>
                       </div>
                       <div className="text-sm font-extrabold text-white font-mono truncate">
                         {auctionState?.highestBidderManager?.name ||

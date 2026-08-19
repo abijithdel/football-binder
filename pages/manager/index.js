@@ -44,23 +44,54 @@ export default function ManagerDashboard() {
 
   // Fetch full team data with populated squad for the logged-in manager
   const fetchMyTeam = async () => {
-    if (!user?.managerProfile?.team?._id) return;
+    const managerId = user?.managerProfile?._id || (typeof user?.managerProfile === 'string' ? user.managerProfile : null);
+    const teamId = user?.managerProfile?.team?._id || (typeof user?.managerProfile?.team === 'string' ? user.managerProfile.team : null);
+
     try {
       setLoadingTeam(true);
-      const res = await fetch(`/api/teams/${user.managerProfile.team._id}`);
-      const data = await res.json();
-      if (data.team) {
-        setTeamData(data.team);
+
+      // 1. Fetch team directly if teamId exists
+      let fetchedTeam = null;
+      if (teamId) {
+        try {
+          const res = await fetch(`/api/teams/${teamId}`);
+          const data = await res.json();
+          if (data.team) fetchedTeam = data.team;
+        } catch (err) {}
+      }
+
+      // 2. Fetch all players from /api/players to guarantee strictly THIS manager's / team's own won players
+      const pRes = await fetch('/api/players');
+      const pData = await pRes.json();
+      if (pData.players) {
+        const myPlayers = pData.players.filter((p) => {
+          if (p.status !== 'sold') return false;
+          const soldToId = p.soldTo?._id || p.soldTo;
+          const pTeamId = p.team?._id || p.team;
+          return (
+            (managerId && soldToId && String(soldToId) === String(managerId)) ||
+            (teamId && pTeamId && String(pTeamId) === String(teamId))
+          );
+        });
+
+        setTeamData({
+          name: fetchedTeam?.name || user?.managerProfile?.team?.name || 'My Team',
+          icon: fetchedTeam?.icon || user?.managerProfile?.team?.icon || '🛡️',
+          budgetSpent: fetchedTeam?.budgetSpent || myPlayers.reduce((sum, pl) => sum + (pl.soldPrice || pl.value || 0), 0),
+          playersWon: myPlayers,
+        });
+      } else if (fetchedTeam) {
+        setTeamData(fetchedTeam);
       }
     } catch (e) {
-      console.error(e);
+      console.error('Error fetching my team:', e);
     } finally {
       setLoadingTeam(false);
     }
   };
 
   useEffect(() => {
-    if (user?.managerProfile?.team?._id) {
+    if (user?.managerProfile) {
       fetchMyTeam();
     }
   }, [user, auctionState?.status]);
@@ -142,7 +173,7 @@ export default function ManagerDashboard() {
               </h1>
               <div className="text-xs text-zinc-400 font-mono flex items-center gap-1.5 mt-0.5">
                 <span className="text-lg">{user.managerProfile?.team?.icon || '🛡️'}</span>
-                <span className="font-bold text-white">{user.managerProfile?.team?.name || 'Independent Club'}</span>
+                <span className="font-bold text-white">{user.managerProfile?.team?.name || 'My Team'}</span>
               </div>
             </div>
           </div>
@@ -157,7 +188,7 @@ export default function ManagerDashboard() {
             </div>
 
             <div className="p-3.5 rounded-2xl bg-zinc-950/90 border border-white/15 text-left min-w-[120px]">
-              <div className="text-[10px] text-zinc-500 uppercase font-mono">Squad Signings</div>
+              <div className="text-[10px] text-zinc-500 uppercase font-mono">My Team Signings</div>
               <div className="text-xl font-extrabold text-white font-mono mt-0.5">
                 {teamData?.playersWon?.length || 0} Players
               </div>
@@ -491,13 +522,13 @@ export default function ManagerDashboard() {
           </div>
         </div>
 
-        {/* RIGHT STAGE: My Club Squad & Won Players */}
+        {/* RIGHT STAGE: My Team Squad & Won Players */}
         <div className="lg:col-span-5 space-y-6">
           <div className="glass-panel p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-bold text-white font-mono uppercase flex items-center gap-2">
-                <Trophy className="w-4 h-4 text-white" />
-                My Club Squad ({teamData?.playersWon?.length || 0})
+                <Shield className="w-4 h-4 text-emerald-400" />
+                MY TEAM ({teamData?.playersWon?.length || 0})
               </h3>
               <Link href="/squads" className="text-xs text-zinc-400 hover:text-white font-mono">
                 View All Squads →
@@ -506,7 +537,7 @@ export default function ManagerDashboard() {
 
             {!teamData?.playersWon || teamData.playersWon.length === 0 ? (
               <div className="p-8 rounded-xl bg-zinc-950 border border-white/10 text-center text-xs text-zinc-500 font-mono">
-                You have not won any players yet. Bid when players appear on the live block!
+                Your team has not won any players yet. Bid when players appear on the live block!
               </div>
             ) : (
               <div className="space-y-2.5 max-h-[500px] overflow-y-auto pr-1">
